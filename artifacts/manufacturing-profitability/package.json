@@ -9,6 +9,8 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "test:browser": "playwright test",
     "test:browser:production": "E2E_PRODUCTION_SMOKE=1 playwright test test/browser/authenticated-routes.spec.mjs",
+    "cleanup:production-smoke-users": "node test/browser/cleanup-production-smoke-users.mjs",
+    "test:production-smoke-cleanup": "node --test test/cleanup-production-smoke-users.test.mjs",
     "test:routes": "node --test test/routes.smoke.test.mjs",
     "validate:routes": "pnpm run test:routes && pnpm run test:browser",
     "typecheck": "tsc -p tsconfig.json --noEmit"

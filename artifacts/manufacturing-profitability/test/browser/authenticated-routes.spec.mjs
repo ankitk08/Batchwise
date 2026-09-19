@@ -5,6 +5,10 @@ import { expect, test } from '@playwright/test';
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
 const smokeScope =
   process.env.E2E_PRODUCTION_SMOKE === '1' ? 'production' : 'development';
+const productionSmokeMarker = {
+  kind: 'batchwise-production-route-smoke',
+  version: 1,
+};
 const testEmail = `route-smoke-${smokeScope}+${randomUUID()}@example.com`;
 const testPassword = `Route-smoke-${randomUUID()}!aA1`;
 let testUserId;
@@ -50,6 +54,9 @@ test.describe.serial('Clerk-initialized application routes', () => {
         password: testPassword,
         first_name: 'Route Smoke',
         last_name: smokeScope,
+        ...(smokeScope === 'production'
+          ? { private_metadata: { production_smoke: productionSmokeMarker } }
+          : {}),
         skip_password_checks: true,
         skip_password_requirement: true,
       }),
