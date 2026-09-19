@@ -17,7 +17,253 @@ export interface DashboardSummary {
   atRiskJobs: number;
   closedJobs: number;
   marginChange: number;
+  yieldRate: number;
+  wasteCost: number;
+  scheduleAttainment: number;
+  ordersOnHold: number;
   lastSyncedAt: string;
+}
+
+export interface PrototypeProfile {
+  productName: string;
+  workspaceName: string;
+  icp: string[];
+  assumptions: string[];
+  firstDecision: string;
+  updateCadence: string;
+  prototypeLimits: string[];
+}
+
+export interface UploadAnalysisInput {
+  fileName: string;
+  sizeBytes: number;
+  rowCount: number;
+  columns: string[];
+}
+
+export type MappingSuggestionStatus = typeof MappingSuggestionStatus[keyof typeof MappingSuggestionStatus];
+
+
+export const MappingSuggestionStatus = {
+  'auto-mapped': 'auto-mapped',
+  review: 'review',
+  unmapped: 'unmapped',
+} as const;
+
+export interface MappingSuggestion {
+  sourceColumn: string;
+  semanticField: string;
+  confidence: number;
+  status: MappingSuggestionStatus;
+}
+
+export type DataQualityCheckSeverity = typeof DataQualityCheckSeverity[keyof typeof DataQualityCheckSeverity];
+
+
+export const DataQualityCheckSeverity = {
+  critical: 'critical',
+  warning: 'warning',
+  info: 'info',
+} as const;
+
+export type DataQualityCheckStatus = typeof DataQualityCheckStatus[keyof typeof DataQualityCheckStatus];
+
+
+export const DataQualityCheckStatus = {
+  passed: 'passed',
+  review: 'review',
+  blocked: 'blocked',
+} as const;
+
+export interface DataQualityCheck {
+  id: string;
+  category: string;
+  title: string;
+  detail: string;
+  severity: DataQualityCheckSeverity;
+  affectedRows: number;
+  affectedValue: number;
+  status: DataQualityCheckStatus;
+  owner: string;
+}
+
+export type UploadAnalysisStatus = typeof UploadAnalysisStatus[keyof typeof UploadAnalysisStatus];
+
+
+export const UploadAnalysisStatus = {
+  ready: 'ready',
+  'ready-with-caveats': 'ready-with-caveats',
+  'needs-review': 'needs-review',
+} as const;
+
+export interface UploadAnalysis {
+  datasetName: string;
+  inferredType: string;
+  status: UploadAnalysisStatus;
+  rowCount: number;
+  columnsDetected: number;
+  readinessScore: number;
+  mappings: MappingSuggestion[];
+  issues: DataQualityCheck[];
+}
+
+export type DataQualitySummaryReadiness = typeof DataQualitySummaryReadiness[keyof typeof DataQualitySummaryReadiness];
+
+
+export const DataQualitySummaryReadiness = {
+  ready: 'ready',
+  'ready-with-caveats': 'ready-with-caveats',
+  blocked: 'blocked',
+} as const;
+
+export interface DataQualitySummary {
+  readiness: DataQualitySummaryReadiness;
+  overallScore: number;
+  revenueCoverage: number;
+  costCoverage: number;
+  traceabilityCoverage: number;
+  blockedKpis: number;
+  reviewItems: number;
+  checks: DataQualityCheck[];
+}
+
+export type SemanticEntityStatus = typeof SemanticEntityStatus[keyof typeof SemanticEntityStatus];
+
+
+export const SemanticEntityStatus = {
+  approved: 'approved',
+  review: 'review',
+  draft: 'draft',
+} as const;
+
+export interface SemanticEntity {
+  name: string;
+  description: string;
+  source: string;
+  confidence: number;
+  status: SemanticEntityStatus;
+}
+
+export interface SemanticRelationship {
+  from: string;
+  to: string;
+  label: string;
+}
+
+export type MetricDefinitionStatus = typeof MetricDefinitionStatus[keyof typeof MetricDefinitionStatus];
+
+
+export const MetricDefinitionStatus = {
+  approved: 'approved',
+  review: 'review',
+  draft: 'draft',
+} as const;
+
+export interface MetricDefinition {
+  name: string;
+  formula: string;
+  businessDefinition: string;
+  owner: string;
+  status: MetricDefinitionStatus;
+}
+
+export interface SemanticModel {
+  version: string;
+  approvedAt: string;
+  entities: SemanticEntity[];
+  relationships: SemanticRelationship[];
+  metrics: MetricDefinition[];
+}
+
+export type KpiDirection = typeof KpiDirection[keyof typeof KpiDirection];
+
+
+export const KpiDirection = {
+  up: 'up',
+  down: 'down',
+  flat: 'flat',
+} as const;
+
+export type KpiStatus = typeof KpiStatus[keyof typeof KpiStatus];
+
+
+export const KpiStatus = {
+  'on-track': 'on-track',
+  watch: 'watch',
+  'off-track': 'off-track',
+} as const;
+
+export interface Kpi {
+  id: string;
+  name: string;
+  value: number;
+  unit: string;
+  target: number;
+  direction: KpiDirection;
+  change: number;
+  status: KpiStatus;
+  definition: string;
+  businessQuestion: string;
+  owner: string;
+}
+
+export type RecommendationEffort = typeof RecommendationEffort[keyof typeof RecommendationEffort];
+
+
+export const RecommendationEffort = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type RecommendationConfidence = typeof RecommendationConfidence[keyof typeof RecommendationConfidence];
+
+
+export const RecommendationConfidence = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
+
+export type RecommendationStatus = typeof RecommendationStatus[keyof typeof RecommendationStatus];
+
+
+export const RecommendationStatus = {
+  proposed: 'proposed',
+  accepted: 'accepted',
+  monitoring: 'monitoring',
+} as const;
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  finding: string;
+  rationale: string;
+  expectedImpact: string;
+  effort: RecommendationEffort;
+  confidence: RecommendationConfidence;
+  owner: string;
+  horizon: string;
+  status: RecommendationStatus;
+  evidence: string[];
+}
+
+export type TeamMemberStatus = typeof TeamMemberStatus[keyof typeof TeamMemberStatus];
+
+
+export const TeamMemberStatus = {
+  active: 'active',
+  invited: 'invited',
+} as const;
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  scope: string;
+  approvals: string[];
+  status: TeamMemberStatus;
 }
 
 export type JobStatus = typeof JobStatus[keyof typeof JobStatus];

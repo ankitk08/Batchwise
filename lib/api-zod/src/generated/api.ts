@@ -28,8 +28,169 @@ export const GetDashboardResponse = zod.object({
   "atRiskJobs": zod.number().int(),
   "closedJobs": zod.number().int(),
   "marginChange": zod.number(),
+  "yieldRate": zod.number(),
+  "wasteCost": zod.number(),
+  "scheduleAttainment": zod.number(),
+  "ordersOnHold": zod.number().int(),
   "lastSyncedAt": zod.string()
 })
+
+
+/**
+ * @summary Get prototype assumptions and ideal customer profile
+ */
+export const GetPrototypeProfileResponse = zod.object({
+  "productName": zod.string(),
+  "workspaceName": zod.string(),
+  "icp": zod.array(zod.string()),
+  "assumptions": zod.array(zod.string()),
+  "firstDecision": zod.string(),
+  "updateCadence": zod.string(),
+  "prototypeLimits": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Profile an uploaded production dataset
+ */
+export const AnalyzeUploadBody = zod.object({
+  "fileName": zod.string(),
+  "sizeBytes": zod.number().int(),
+  "rowCount": zod.number().int(),
+  "columns": zod.array(zod.string())
+})
+
+export const AnalyzeUploadResponse = zod.object({
+  "datasetName": zod.string(),
+  "inferredType": zod.string(),
+  "status": zod.enum(['ready', 'ready-with-caveats', 'needs-review']),
+  "rowCount": zod.number().int(),
+  "columnsDetected": zod.number().int(),
+  "readinessScore": zod.number(),
+  "mappings": zod.array(zod.object({
+  "sourceColumn": zod.string(),
+  "semanticField": zod.string(),
+  "confidence": zod.number(),
+  "status": zod.enum(['auto-mapped', 'review', 'unmapped'])
+})),
+  "issues": zod.array(zod.object({
+  "id": zod.string(),
+  "category": zod.string(),
+  "title": zod.string(),
+  "detail": zod.string(),
+  "severity": zod.enum(['critical', 'warning', 'info']),
+  "affectedRows": zod.number().int(),
+  "affectedValue": zod.number(),
+  "status": zod.enum(['passed', 'review', 'blocked']),
+  "owner": zod.string()
+}))
+})
+
+
+/**
+ * @summary Get readiness and data-quality checks
+ */
+export const GetDataQualityResponse = zod.object({
+  "readiness": zod.enum(['ready', 'ready-with-caveats', 'blocked']),
+  "overallScore": zod.number(),
+  "revenueCoverage": zod.number(),
+  "costCoverage": zod.number(),
+  "traceabilityCoverage": zod.number(),
+  "blockedKpis": zod.number().int(),
+  "reviewItems": zod.number().int(),
+  "checks": zod.array(zod.object({
+  "id": zod.string(),
+  "category": zod.string(),
+  "title": zod.string(),
+  "detail": zod.string(),
+  "severity": zod.enum(['critical', 'warning', 'info']),
+  "affectedRows": zod.number().int(),
+  "affectedValue": zod.number(),
+  "status": zod.enum(['passed', 'review', 'blocked']),
+  "owner": zod.string()
+}))
+})
+
+
+/**
+ * @summary Get the approved food manufacturing semantic model
+ */
+export const GetSemanticModelResponse = zod.object({
+  "version": zod.string(),
+  "approvedAt": zod.string(),
+  "entities": zod.array(zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "source": zod.string(),
+  "confidence": zod.number(),
+  "status": zod.enum(['approved', 'review', 'draft'])
+})),
+  "relationships": zod.array(zod.object({
+  "from": zod.string(),
+  "to": zod.string(),
+  "label": zod.string()
+})),
+  "metrics": zod.array(zod.object({
+  "name": zod.string(),
+  "formula": zod.string(),
+  "businessDefinition": zod.string(),
+  "owner": zod.string(),
+  "status": zod.enum(['approved', 'review', 'draft'])
+}))
+})
+
+
+/**
+ * @summary Get governed food processing KPIs
+ */
+export const GetKpisResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "value": zod.number(),
+  "unit": zod.string(),
+  "target": zod.number(),
+  "direction": zod.enum(['up', 'down', 'flat']),
+  "change": zod.number(),
+  "status": zod.enum(['on-track', 'watch', 'off-track']),
+  "definition": zod.string(),
+  "businessQuestion": zod.string(),
+  "owner": zod.string()
+})
+export const GetKpisResponse = zod.array(GetKpisResponseItem)
+
+
+/**
+ * @summary Get evidence-backed improvement recommendations
+ */
+export const GetRecommendationsResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "finding": zod.string(),
+  "rationale": zod.string(),
+  "expectedImpact": zod.string(),
+  "effort": zod.enum(['low', 'medium', 'high']),
+  "confidence": zod.enum(['high', 'medium', 'low']),
+  "owner": zod.string(),
+  "horizon": zod.string(),
+  "status": zod.enum(['proposed', 'accepted', 'monitoring']),
+  "evidence": zod.array(zod.string())
+})
+export const GetRecommendationsResponse = zod.array(GetRecommendationsResponseItem)
+
+
+/**
+ * @summary Get workspace members and data roles
+ */
+export const GetTeamResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string(),
+  "scope": zod.string(),
+  "approvals": zod.array(zod.string()),
+  "status": zod.enum(['active', 'invited'])
+})
+export const GetTeamResponse = zod.array(GetTeamResponseItem)
 
 
 /**

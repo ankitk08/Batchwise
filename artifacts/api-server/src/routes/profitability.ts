@@ -1,20 +1,38 @@
 import { Router, type IRouter } from "express";
 import {
+  AnalyzeUploadBody,
+  AnalyzeUploadResponse,
   AskQuestionBody,
   AskQuestionResponse,
+  GetDataQualityResponse,
   GetDashboardResponse,
   GetJobParams,
   GetJobResponse,
   GetJobsQueryParams,
   GetJobsResponse,
+  GetKpisResponse,
+  GetPrototypeProfileResponse,
+  GetRecommendationsResponse,
+  GetSemanticModelResponse,
   GetSourcesResponse,
+  GetTeamResponse,
 } from "@workspace/api-zod";
-import { jobs, sources, withEvidence } from "../lib/manufacturing-data";
+import {
+  kpis,
+  productionRuns,
+  prototypeProfile,
+  qualityChecks,
+  recommendations,
+  runWithEvidence,
+  semanticModel,
+  sources,
+  team,
+} from "../lib/food-prototype-data";
 
 const router: IRouter = Router();
 
 router.get("/dashboard", (_req, res) => {
-  const closedJobs = jobs.filter((job) => job.status === "closed");
+  const closedJobs = productionRuns.filter((job) => job.status === "closed");
   const revenue = closedJobs.reduce((sum, job) => sum + job.revenue, 0);
   const contributionMargin = closedJobs.reduce(
     (sum, job) => sum + job.margin,
@@ -29,14 +47,141 @@ router.get("/dashboard", (_req, res) => {
       contributionMarginRate: Number(
         ((contributionMargin / revenue) * 100).toFixed(1),
       ),
-      atRiskJobs: jobs.filter(
+      atRiskJobs: productionRuns.filter(
         (job) => job.status === "at-risk" || job.marginRate < 15,
       ).length,
       closedJobs: closedJobs.length,
       marginChange: -3.8,
+      yieldRate: 91.8,
+      wasteCost: 18420,
+      scheduleAttainment: 87,
+      ordersOnHold: 2,
       lastSyncedAt: "2026-09-19T08:42:00.000Z",
     }),
   );
+});
+
+router.get("/prototype-profile", (_req, res) => {
+  res.json(GetPrototypeProfileResponse.parse(prototypeProfile));
+});
+
+router.post("/uploads/analyze", (req, res) => {
+  const parsed = AnalyzeUploadBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { fileName, rowCount, columns, sizeBytes } = parsed.data;
+  const normalizedColumns = columns.map((column) => column.toLowerCase());
+  const semanticFields = [
+    ["run", "Production Run ID"],
+    ["batch", "Production Run ID"],
+    ["sku", "Product SKU"],
+    ["product", "Product Name"],
+    ["lot", "Ingredient Lot"],
+    ["qty", "Actual Quantity"],
+    ["quantity", "Actual Quantity"],
+    ["cost", "Actual Cost"],
+    ["hours", "Direct Labor Hours"],
+    ["yield", "Good Yield"],
+    ["hold", "Quality Hold"],
+  ] as const;
+
+  const mappings = columns.map((sourceColumn, index) => {
+    const normalized = normalizedColumns[index] ?? "";
+    const match = semanticFields.find(([keyword]) =>
+      normalized.includes(keyword),
+    );
+    return {
+      sourceColumn,
+      semanticField: match?.[1] ?? "Unmapped business field",
+      confidence: match ? 94 : 42,
+      status: match ? "auto-mapped" : "review",
+    };
+  });
+  const unmapped = mappings.filter((mapping) => mapping.status === "review");
+  const issues = [
+    ...(unmapped.length
+      ? [
+          {
+            id: "upload-unmapped",
+            category: "Semantic mapping",
+            title: `${unmapped.length} columns require review`,
+            detail:
+              "These fields will not influence KPIs until a business owner approves their meaning.",
+            severity: "warning",
+            affectedRows: rowCount,
+            affectedValue: 0,
+            status: "review",
+            owner: "Operations",
+          },
+        ]
+      : []),
+    {
+      id: "upload-uom",
+      category: "Units of measure",
+      title: "Confirm pounds, cases, and eaches",
+      detail:
+        "The prototype detected quantity fields but unit conversions require approval before cost and yield calculations.",
+      severity: "warning",
+      affectedRows: Math.min(rowCount, 14),
+      affectedValue: 4870,
+      status: "review",
+      owner: "Finance",
+    },
+  ];
+
+  res.json(
+    AnalyzeUploadResponse.parse({
+      datasetName: fileName,
+      inferredType: normalizedColumns.some((column) =>
+        column.includes("lot"),
+      )
+        ? "Batch and ingredient consumption"
+        : "Food manufacturing operating dataset",
+      status: unmapped.length > Math.max(2, columns.length / 3)
+        ? "needs-review"
+        : "ready-with-caveats",
+      rowCount,
+      columnsDetected: columns.length,
+      readinessScore: Math.max(48, 96 - unmapped.length * 8),
+      mappings,
+      issues,
+      sizeBytes,
+    }),
+  );
+});
+
+router.get("/data-quality", (_req, res) => {
+  res.json(
+    GetDataQualityResponse.parse({
+      readiness: "ready-with-caveats",
+      overallScore: 91,
+      revenueCoverage: 99.4,
+      costCoverage: 96.8,
+      traceabilityCoverage: 100,
+      blockedKpis: 1,
+      reviewItems: 2,
+      checks: qualityChecks,
+    }),
+  );
+});
+
+router.get("/semantic-model", (_req, res) => {
+  res.json(GetSemanticModelResponse.parse(semanticModel));
+});
+
+router.get("/kpis", (_req, res) => {
+  res.json(GetKpisResponse.parse(kpis));
+});
+
+router.get("/recommendations", (_req, res) => {
+  res.json(GetRecommendationsResponse.parse(recommendations));
+});
+
+router.get("/team", (_req, res) => {
+  res.json(GetTeamResponse.parse(team));
 });
 
 router.get("/jobs", (req, res) => {
@@ -49,7 +194,7 @@ router.get("/jobs", (req, res) => {
   const { status = "all", search } = parsed.data;
   const normalizedSearch = search?.trim().toLowerCase();
 
-  const matchingJobs = jobs.filter((job) => {
+  const matchingJobs = productionRuns.filter((job) => {
     const matchesStatus =
       status === "all" ||
       (status === "at-risk" &&
@@ -77,13 +222,15 @@ router.get("/jobs/:jobId", (req, res) => {
     return;
   }
 
-  const job = jobs.find((candidate) => candidate.id === params.data.jobId);
+  const job = productionRuns.find(
+    (candidate) => candidate.id === params.data.jobId,
+  );
   if (!job) {
     res.status(404).json({ error: "Job not found" });
     return;
   }
 
-  res.json(GetJobResponse.parse(withEvidence(job)));
+  res.json(GetJobResponse.parse(runWithEvidence(job)));
 });
 
 router.post("/questions/ask", (req, res) => {
@@ -95,7 +242,7 @@ router.post("/questions/ask", (req, res) => {
 
   const question = parsed.data.question.trim();
   const normalized = question.toLowerCase();
-  const lowMarginJobs = jobs
+  const lowMarginJobs = productionRuns
     .filter((job) => job.status === "closed" && job.marginRate < 20)
     .sort((a, b) => a.marginRate - b.marginRate);
   const totalLeak = lowMarginJobs.reduce(
@@ -109,19 +256,19 @@ router.post("/questions/ask", (req, res) => {
     normalized.includes("overrun");
 
   const answerJobs = isOpenRiskQuestion
-    ? jobs.filter((job) => job.status === "at-risk")
+    ? productionRuns.filter((job) => job.status === "at-risk")
     : lowMarginJobs;
 
   const headline = isCustomerQuestion
-    ? "Apex Motion produced the weakest contribution margin."
+    ? "Harvest Table Foods produced the weakest contribution margin."
     : isOpenRiskQuestion
-      ? "One open job is currently trending below its estimate."
-      : "Three closed jobs finished below the 20% margin threshold.";
+      ? "One open production run has a material labor risk."
+      : "Two closed production runs finished below the 20% margin threshold.";
   const answer = isCustomerQuestion
-    ? "Apex Motion's J-1051 lost $2,220 after rework, repeat machining, and unquoted outside processing. It is the only customer with a negative closed-job margin in the current period."
+    ? "Harvest Table Foods' salsa run lost $1,640 after a quality hold, relabeling, and rework across two shifts. It is the only customer with a negative closed-run margin in the current period."
     : isOpenRiskQuestion
-      ? "J-1057 for Orion Packaging has consumed 132% of routed labor hours. Material and outside processing remain near plan, making labor the primary risk."
-      : "J-1051 lost money, while J-1046 and J-1048 closed below the 20% target. Across the three jobs, actual cost exceeded estimate by $31,740, led by rework labor, replacement material, and supplier price variance.";
+      ? "PR-240919-A for Regional Grocery Co-op accumulated 19 unplanned labor hours after filler downtime. Ingredients remain within standard, while final sanitation and conversion overhead are not yet posted."
+      : "PR-240914-C lost money and PR-240916-B closed below the 20% target. The primary drivers were relabeling after a quality hold, tomato input price, and higher cook loss.";
 
   res.json(
     AskQuestionResponse.parse({
@@ -134,25 +281,25 @@ router.post("/questions/ask", (req, res) => {
       asOf: "2026-09-19T08:42:00.000Z",
       confidence: "high",
       caveat:
-        "Three labor rows with unresolved employee aliases were excluded from all calculations.",
+        "Seven labor rows with unresolved employee aliases and two packaging unit conversions are excluded until approved.",
       evidence: [
         {
           label: "Revenue coverage",
           value: "100%",
-          source: "QuickBooks invoices",
-          detail: "All included closed jobs matched to a posted invoice.",
+          source: "ERP shipments + QuickBooks invoices",
+          detail: "99.4% of included shipped value matches a posted invoice.",
         },
         {
           label: "Cost coverage",
-          value: "98.7%",
-          source: "ERP, labor workbook, vendor bills",
-          detail: "Only unresolved labor aliases were excluded.",
+          value: "96.8%",
+          source: "ERP, quality, packaging, and labor files",
+          detail: "Unresolved labor aliases and packaging UOM rows were excluded.",
         },
         {
           label: "Margin definition",
-          value: "Contribution margin",
-          source: "Approved costing policy",
-          detail: "Revenue less actual material, labor, outside processing, and applied overhead.",
+          value: "Batch contribution margin",
+          source: "Metric contract v1.2",
+          detail: "Revenue less ingredients, packaging, direct labor, and approved conversion overhead.",
         },
       ],
       jobs: answerJobs,

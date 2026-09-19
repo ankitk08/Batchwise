@@ -38,6 +38,102 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardSummary"
+  /prototype-profile:
+    get:
+      operationId: getPrototypeProfile
+      tags: [profitability]
+      summary: Get prototype assumptions and ideal customer profile
+      responses:
+        "200":
+          description: Prototype product assumptions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrototypeProfile"
+  /uploads/analyze:
+    post:
+      operationId: analyzeUpload
+      tags: [profitability]
+      summary: Profile an uploaded production dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadAnalysisInput"
+      responses:
+        "200":
+          description: Dataset profile and mapping suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadAnalysis"
+  /data-quality:
+    get:
+      operationId: getDataQuality
+      tags: [profitability]
+      summary: Get readiness and data-quality checks
+      responses:
+        "200":
+          description: Current data readiness
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataQualitySummary"
+  /semantic-model:
+    get:
+      operationId: getSemanticModel
+      tags: [profitability]
+      summary: Get the approved food manufacturing semantic model
+      responses:
+        "200":
+          description: Semantic model
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SemanticModel"
+  /kpis:
+    get:
+      operationId: getKpis
+      tags: [profitability]
+      summary: Get governed food processing KPIs
+      responses:
+        "200":
+          description: KPI catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Kpi"
+  /recommendations:
+    get:
+      operationId: getRecommendations
+      tags: [profitability]
+      summary: Get evidence-backed improvement recommendations
+      responses:
+        "200":
+          description: Prioritized recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+  /team:
+    get:
+      operationId: getTeam
+      tags: [profitability]
+      summary: Get workspace members and data roles
+      responses:
+        "200":
+          description: Workspace team
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMember"
   /jobs:
     get:
       operationId: getJobs
@@ -145,6 +241,14 @@ components:
           type: integer
         marginChange:
           type: number
+        yieldRate:
+          type: number
+        wasteCost:
+          type: number
+        scheduleAttainment:
+          type: number
+        ordersOnHold:
+          type: integer
         lastSyncedAt:
           type: string
       required:
@@ -155,7 +259,328 @@ components:
         - atRiskJobs
         - closedJobs
         - marginChange
+        - yieldRate
+        - wasteCost
+        - scheduleAttainment
+        - ordersOnHold
         - lastSyncedAt
+    PrototypeProfile:
+      type: object
+      properties:
+        productName:
+          type: string
+        workspaceName:
+          type: string
+        icp:
+          type: array
+          items:
+            type: string
+        assumptions:
+          type: array
+          items:
+            type: string
+        firstDecision:
+          type: string
+        updateCadence:
+          type: string
+        prototypeLimits:
+          type: array
+          items:
+            type: string
+      required:
+        - productName
+        - workspaceName
+        - icp
+        - assumptions
+        - firstDecision
+        - updateCadence
+        - prototypeLimits
+    UploadAnalysisInput:
+      type: object
+      properties:
+        fileName:
+          type: string
+        sizeBytes:
+          type: integer
+        rowCount:
+          type: integer
+        columns:
+          type: array
+          items:
+            type: string
+      required: [fileName, sizeBytes, rowCount, columns]
+    MappingSuggestion:
+      type: object
+      properties:
+        sourceColumn:
+          type: string
+        semanticField:
+          type: string
+        confidence:
+          type: number
+        status:
+          type: string
+          enum: [auto-mapped, review, unmapped]
+      required: [sourceColumn, semanticField, confidence, status]
+    DataQualityCheck:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+        title:
+          type: string
+        detail:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        affectedRows:
+          type: integer
+        affectedValue:
+          type: number
+        status:
+          type: string
+          enum: [passed, review, blocked]
+        owner:
+          type: string
+      required:
+        - id
+        - category
+        - title
+        - detail
+        - severity
+        - affectedRows
+        - affectedValue
+        - status
+        - owner
+    UploadAnalysis:
+      type: object
+      properties:
+        datasetName:
+          type: string
+        inferredType:
+          type: string
+        status:
+          type: string
+          enum: [ready, ready-with-caveats, needs-review]
+        rowCount:
+          type: integer
+        columnsDetected:
+          type: integer
+        readinessScore:
+          type: number
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/MappingSuggestion"
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataQualityCheck"
+      required:
+        - datasetName
+        - inferredType
+        - status
+        - rowCount
+        - columnsDetected
+        - readinessScore
+        - mappings
+        - issues
+    DataQualitySummary:
+      type: object
+      properties:
+        readiness:
+          type: string
+          enum: [ready, ready-with-caveats, blocked]
+        overallScore:
+          type: number
+        revenueCoverage:
+          type: number
+        costCoverage:
+          type: number
+        traceabilityCoverage:
+          type: number
+        blockedKpis:
+          type: integer
+        reviewItems:
+          type: integer
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataQualityCheck"
+      required:
+        - readiness
+        - overallScore
+        - revenueCoverage
+        - costCoverage
+        - traceabilityCoverage
+        - blockedKpis
+        - reviewItems
+        - checks
+    SemanticEntity:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+        confidence:
+          type: number
+        status:
+          type: string
+          enum: [approved, review, draft]
+      required: [name, description, source, confidence, status]
+    SemanticRelationship:
+      type: object
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        label:
+          type: string
+      required: [from, to, label]
+    MetricDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+        formula:
+          type: string
+        businessDefinition:
+          type: string
+        owner:
+          type: string
+        status:
+          type: string
+          enum: [approved, review, draft]
+      required: [name, formula, businessDefinition, owner, status]
+    SemanticModel:
+      type: object
+      properties:
+        version:
+          type: string
+        approvedAt:
+          type: string
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/SemanticEntity"
+        relationships:
+          type: array
+          items:
+            $ref: "#/components/schemas/SemanticRelationship"
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricDefinition"
+      required: [version, approvedAt, entities, relationships, metrics]
+    Kpi:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        target:
+          type: number
+        direction:
+          type: string
+          enum: [up, down, flat]
+        change:
+          type: number
+        status:
+          type: string
+          enum: [on-track, watch, off-track]
+        definition:
+          type: string
+        businessQuestion:
+          type: string
+        owner:
+          type: string
+      required:
+        - id
+        - name
+        - value
+        - unit
+        - target
+        - direction
+        - change
+        - status
+        - definition
+        - businessQuestion
+        - owner
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        finding:
+          type: string
+        rationale:
+          type: string
+        expectedImpact:
+          type: string
+        effort:
+          type: string
+          enum: [low, medium, high]
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        owner:
+          type: string
+        horizon:
+          type: string
+        status:
+          type: string
+          enum: [proposed, accepted, monitoring]
+        evidence:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - title
+        - finding
+        - rationale
+        - expectedImpact
+        - effort
+        - confidence
+        - owner
+        - horizon
+        - status
+        - evidence
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        scope:
+          type: string
+        approvals:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, invited]
+      required: [id, name, email, role, scope, approvals, status]
     Job:
       type: object
       properties:

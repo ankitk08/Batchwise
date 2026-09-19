@@ -1,6 +1,6 @@
-# Manufacturing Profitability Copilot
+# Batchwise Decision Intelligence
 
-A source-backed profitability cockpit for owner-led manufacturers using fragmented ERP, accounting, and spreadsheet data.
+A governed analytics and decision-intelligence prototype for US SMB specialty food processors using fragmented ERP, accounting, quality, labor, and spreadsheet data.
 
 ## Run & Operate
 
@@ -35,11 +35,22 @@ A source-backed profitability cockpit for owner-led manufacturers using fragment
 
 ## Product
 
-- Profitability cockpit for the current period
-- Natural-language, source-backed margin questions
-- Searchable job list with margin and leak indicators
-- Job-level estimated-versus-actual cost evidence
-- Connected-source health and reconciliation visibility
+- Guided file onboarding with column profiling and suggested semantic mappings
+- Data-readiness gates with named business owners and explicit KPI blocks
+- Versioned food-processing semantic model and metric contracts
+- Executive cockpit for margin, yield, waste, schedule attainment, and quality holds
+- Source-backed consultant questions and production-run evidence
+- Prioritized recommendations with impact, effort, confidence, owner, and supporting evidence
+- Authenticated customer accounts plus a public seeded-demo workspace
+
+## Prototype ICP and assumptions
+
+- US specialty food processors with 25–250 employees, $5M–$75M revenue, and one to three plants
+- Initial segments: sauces, dips, prepared foods, bakery, beverages, and private-label products
+- Initial source pattern: QuickBooks or a mid-market ERP plus recurring CSV/XLSX quality, labor, and production exports
+- Primary buyer: owner, controller, or general manager; recurring users include plant, finance, and quality leaders
+- First decision: which production runs, SKUs, and customers are eroding contribution margin, why, and what should be acted on this week
+- The prototype is read-only and does not replace food-safety, HACCP, QMS, ERP, or accounting systems of record
 
 ## User preferences
 

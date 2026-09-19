@@ -1,97 +1,115 @@
-import { useGetSources } from "@workspace/api-client-react"
-import { formatCurrency, cn } from "@/lib/utils"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { DatabaseZap, CheckCircle2, AlertTriangle, Clock, Server } from "lucide-react"
+import { useGetSources } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Network, Server, Cloud, RefreshCw, Plus, CheckCircle2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 
 export default function Sources() {
-  const { data: sources, isLoading } = useGetSources()
+  const { data: sources, isLoading } = useGetSources();
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-[1200px] mx-auto space-y-8">
+        <Skeleton className="h-10 w-1/4" />
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Data Sources</h1>
-        <p className="text-slate-500 mt-2">Connected systems feeding the profitability cockpit.</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="border-slate-200">
-              <CardHeader className="pb-3">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-4 w-24 mt-2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          sources?.map(source => (
-            <Card key={source.id} className={cn(
-              "border hover-elevate transition-all",
-              source.status === 'connected' ? 'border-slate-200' : 
-              source.status === 'needs-review' ? 'border-amber-200 bg-amber-50/20' : 
-              'border-slate-200 border-dashed bg-slate-50'
-            )}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center">
-                    <Server className={cn("w-5 h-5 mr-2", source.status === 'connected' ? "text-indigo-600" : "text-slate-400")} />
-                    <CardTitle className="text-lg">{source.name}</CardTitle>
-                  </div>
-                  <Badge variant={
-                    source.status === 'connected' ? 'success' : 
-                    source.status === 'needs-review' ? 'warning' : 'outline'
-                  } className="capitalize">
-                    {source.status.replace('-', ' ')}
-                  </Badge>
-                </div>
-                <CardDescription className="uppercase tracking-wider text-xs font-semibold pt-1">
-                  {source.type}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="mb-4">
-                  <p className="text-sm text-slate-600 line-clamp-2">{source.detail}</p>
-                </div>
-                
-                <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
-                  <div className="flex items-center">
-                    <DatabaseZap className="w-3.5 h-3.5 mr-1" />
-                    {source.recordCount > 0 ? (
-                      <span className="font-mono font-medium">{source.recordCount.toLocaleString()} records</span>
-                    ) : (
-                      <span>Pending sync</span>
-                    )}
-                  </div>
-                  {source.lastSyncedAt && (
-                    <div className="flex items-center" title={new Date(source.lastSyncedAt).toLocaleString()}>
-                      <Clock className="w-3.5 h-3.5 mr-1" />
-                      {new Date(source.lastSyncedAt).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-      
-      <div className="mt-12 bg-slate-50 rounded-lg border border-slate-200 p-6 flex items-start">
-        <div className="bg-white p-2 rounded-full shadow-sm mr-4 flex-shrink-0">
-          <DatabaseZap className="w-6 h-6 text-indigo-600" />
-        </div>
+    <div className="p-6 max-w-[1200px] mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-slate-900">Reconciliation Engine Active</h3>
-          <p className="text-sm text-slate-600 mt-1">
-            The Copilot continuously reconciles data across these sources to build high-confidence margin metrics. 
-            When sources conflict (e.g. ERP vs Timesheets), it highlights the discrepancy and drops the confidence score.
+          <h1 className="text-3xl font-bold tracking-tight">Data Sources</h1>
+          <p className="text-muted-foreground mt-1">
+            Connected ERPs, spreadsheets, and databases.
           </p>
         </div>
+        <Button asChild>
+          <Link href="/onboarding"><Plus className="mr-2 h-4 w-4" /> Connect Source</Link>
+        </Button>
       </div>
+
+      <Card className="shadow-sm border-border/50">
+        <CardHeader className="bg-muted/20 border-b">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Network className="h-5 w-5 text-muted-foreground" />
+            Configured Sources
+          </CardTitle>
+          <CardDescription>
+            Manage automated syncs and source configurations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!sources || sources.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground">
+              <Server className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+              <p>No data sources configured yet.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Records</TableHead>
+                  <TableHead>Last Sync</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sources.map((source) => (
+                  <TableRow key={source.id} className="hover:bg-muted/10">
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span>{source.name}</span>
+                        <span className="text-xs text-muted-foreground">{source.detail}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-background text-xs uppercase tracking-wider">
+                        {source.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {source.status === 'connected' && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                        {source.status === 'needs-review' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                        {source.status === 'planned' && <Cloud className="h-4 w-4 text-muted-foreground" />}
+                        <span className={cn(
+                          "text-sm capitalize font-medium",
+                          source.status === 'connected' ? "text-emerald-700 dark:text-emerald-500" :
+                          source.status === 'needs-review' ? "text-amber-700 dark:text-amber-500" : "text-muted-foreground"
+                        )}>
+                          {source.status.replace('-', ' ')}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {source.recordCount > 0 ? source.recordCount.toLocaleString() : '-'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {source.lastSyncedAt ? new Date(source.lastSyncedAt).toLocaleString() : 'Never'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {source.status !== 'planned' && (
+                        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                          <RefreshCw className="h-4 w-4 mr-2" /> Sync
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

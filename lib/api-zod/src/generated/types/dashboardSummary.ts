@@ -14,5 +14,9 @@ export interface DashboardSummary {
   atRiskJobs: number;
   closedJobs: number;
   marginChange: number;
+  yieldRate: number;
+  wasteCost: number;
+  scheduleAttainment: number;
+  ordersOnHold: number;
   lastSyncedAt: string;
 }
