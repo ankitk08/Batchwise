@@ -1,6 +1,6 @@
-# [Project name]
+# Manufacturing Profitability Copilot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A source-backed profitability cockpit for owner-led manufacturers using fragmented ERP, accounting, and spreadsheet data.
 
 ## Run & Operate
 
@@ -22,19 +22,28 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/manufacturing-profitability/` — React cockpit, jobs, job evidence, and source health
+- `artifacts/api-server/src/routes/profitability.ts` — profitability API handlers
+- `artifacts/api-server/src/lib/manufacturing-data.ts` — deterministic first-build dataset
+- `lib/api-spec/openapi.yaml` — source of truth for the API contract
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Keep the first product read-only; prove answer quality before adding source mutations.
+- Use deterministic manufacturing calculations and source evidence. Natural language selects approved analyses but does not own financial math.
+- Build the product before a full agent-evaluation system, while retaining a small golden-question set from the first workflow.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Profitability cockpit for the current period
+- Natural-language, source-backed margin questions
+- Searchable job list with margin and leak indicators
+- Job-level estimated-versus-actual cost evidence
+- Connected-source health and reconciliation visibility
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Prioritize the working app first; expand formal agent evaluation after the initial product flow is useful.
 
 ## Gotchas
 
