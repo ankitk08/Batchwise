@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminActivity';
+export * from './adminOverview';
+export * from './adminUser';
 export * from './costLine';
 export * from './dashboardSummary';
 export * from './dataQualityCheck';
@@ -33,6 +36,7 @@ export * from './metricDefinitionStatus';
 export * from './prototypeProfile';
 export * from './questionAnswer';
 export * from './questionAnswerConfidence';
+export * from './questionHistoryItem';
 export * from './questionInput';
 export * from './recommendation';
 export * from './recommendationConfidence';
@@ -47,3 +51,4 @@ export * from './teamMemberStatus';
 export * from './uploadAnalysis';
 export * from './uploadAnalysisInput';
 export * from './uploadAnalysisStatus';
+export * from './uploadRecord';

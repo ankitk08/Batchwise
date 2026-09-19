@@ -1,5 +1,13 @@
 import { useState, useRef } from "react";
-import { useAnalyzeUpload, UploadAnalysis } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getGetAdminOverviewQueryKey,
+  getGetDataQualityQueryKey,
+  getGetUploadsQueryKey,
+  UploadAnalysis,
+  useAnalyzeUpload,
+  useGetUploads,
+} from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +23,8 @@ export default function Onboarding() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<UploadAnalysis | null>(null);
   const analyzeUpload = useAnalyzeUpload();
+  const { data: uploads } = useGetUploads();
+  const queryClient = useQueryClient();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -49,6 +59,9 @@ export default function Onboarding() {
         onSuccess: (result) => {
           setAnalysisResult(result);
           setIsAnalyzing(false);
+          queryClient.invalidateQueries({ queryKey: getGetUploadsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDataQualityQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
         },
         onError: () => {
           setIsAnalyzing(false);
@@ -209,6 +222,33 @@ export default function Onboarding() {
           )}
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Persisted Upload History</CardTitle>
+          <CardDescription>These records are stored in PostgreSQL and remain after refresh.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!uploads || uploads.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No saved uploads yet. Upload a CSV to create the first record.</p>
+          ) : (
+            <div className="space-y-3">
+              {uploads.slice(0, 5).map((upload) => (
+                <div key={upload.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-md border p-3">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{upload.fileName}</p>
+                    <p className="text-xs text-muted-foreground">{upload.rowCount.toLocaleString()} rows · {new Date(upload.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="font-mono font-semibold text-primary">{upload.readinessScore}%</p>
+                    <p className="text-xs text-muted-foreground capitalize">{upload.status.replace(/-/g, " ")}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

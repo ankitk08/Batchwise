@@ -1,0 +1,1 @@
+- [Batchwise workspace persistence](batchwise-workspace-persistence.md) — keep the public seeded demo while isolating each signed-in user's persisted workspace activity.

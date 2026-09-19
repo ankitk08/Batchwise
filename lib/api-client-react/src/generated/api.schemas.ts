@@ -107,6 +107,16 @@ export interface UploadAnalysis {
   issues: DataQualityCheck[];
 }
 
+export interface UploadRecord {
+  id: number;
+  fileName: string;
+  sizeBytes: number;
+  rowCount: number;
+  readinessScore: number;
+  status: string;
+  createdAt: string;
+}
+
 export type DataQualitySummaryReadiness = typeof DataQualitySummaryReadiness[keyof typeof DataQualitySummaryReadiness];
 
 
@@ -349,6 +359,39 @@ export interface QuestionAnswer {
   caveat: string;
   evidence: EvidenceItem[];
   jobs: Job[];
+}
+
+export interface QuestionHistoryItem {
+  id: number;
+  question: string;
+  headline: string;
+  answer: string;
+  createdAt: string;
+}
+
+export interface AdminUser {
+  userId: string;
+  displayName: string;
+  role: string;
+  lastSeenAt: string;
+}
+
+export interface AdminActivity {
+  type: string;
+  label: string;
+  detail: string;
+  occurredAt: string;
+}
+
+export interface AdminOverview {
+  workspaceName: string;
+  persistent: boolean;
+  userCount: number;
+  productionRunCount: number;
+  uploadCount: number;
+  questionCount: number;
+  users: AdminUser[];
+  recentActivity: AdminActivity[];
 }
 
 export type DataSourceStatus = typeof DataSourceStatus[keyof typeof DataSourceStatus];

@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminOverview,
   DashboardSummary,
   DataQualitySummary,
   DataSource,
@@ -30,12 +31,14 @@ import type {
   Kpi,
   PrototypeProfile,
   QuestionAnswer,
+  QuestionHistoryItem,
   QuestionInput,
   Recommendation,
   SemanticModel,
   TeamMember,
   UploadAnalysis,
-  UploadAnalysisInput
+  UploadAnalysisInput,
+  UploadRecord
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -384,6 +387,83 @@ export const useAnalyzeUpload = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getAnalyzeUploadMutationOptions(options));
     }
+
+export const getGetUploadsUrl = () => {
+
+
+
+
+  return `/api/uploads`
+}
+
+/**
+ * @summary Get persisted upload analyses for the current workspace
+ */
+export const getUploads = async ( options?: Parameters<typeof customFetch>[1]): Promise<UploadRecord[]> => {
+
+  return customFetch<UploadRecord[]>(getGetUploadsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUploadsQueryKey = () => {
+    return [
+    `/api/uploads`
+    ] as const;
+    }
+
+
+export const getGetUploadsQueryOptions = <TData = Awaited<ReturnType<typeof getUploads>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUploads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUploadsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUploads>>> = ({ signal }) => getUploads({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUploads>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUploadsQueryResult = NonNullable<Awaited<ReturnType<typeof getUploads>>>
+export type GetUploadsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get persisted upload analyses for the current workspace
+ */
+
+export function useGetUploads<TData = Awaited<ReturnType<typeof getUploads>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUploads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUploadsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetDataQualityUrl = () => {
 
@@ -1018,6 +1098,160 @@ export const useAskQuestion = <TError = ErrorType<void>,
       > => {
       return useMutation(getAskQuestionMutationOptions(options));
     }
+
+export const getGetQuestionHistoryUrl = () => {
+
+
+
+
+  return `/api/questions/history`
+}
+
+/**
+ * @summary Get persisted consultant questions for the current workspace
+ */
+export const getQuestionHistory = async ( options?: Parameters<typeof customFetch>[1]): Promise<QuestionHistoryItem[]> => {
+
+  return customFetch<QuestionHistoryItem[]>(getGetQuestionHistoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuestionHistoryQueryKey = () => {
+    return [
+    `/api/questions/history`
+    ] as const;
+    }
+
+
+export const getGetQuestionHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getQuestionHistory>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getQuestionHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuestionHistoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestionHistory>>> = ({ signal }) => getQuestionHistory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuestionHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetQuestionHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getQuestionHistory>>>
+export type GetQuestionHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get persisted consultant questions for the current workspace
+ */
+
+export function useGetQuestionHistory<TData = Awaited<ReturnType<typeof getQuestionHistory>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getQuestionHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetQuestionHistoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminOverviewUrl = () => {
+
+
+
+
+  return `/api/admin/overview`
+}
+
+/**
+ * @summary Get real workspace usage and persistence metrics
+ */
+export const getAdminOverview = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminOverview> => {
+
+  return customFetch<AdminOverview>(getGetAdminOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminOverviewQueryKey = () => {
+    return [
+    `/api/admin/overview`
+    ] as const;
+    }
+
+
+export const getGetAdminOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getAdminOverview>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminOverview>>> = ({ signal }) => getAdminOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminOverview>>>
+export type GetAdminOverviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get real workspace usage and persistence metrics
+ */
+
+export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOverview>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetSourcesUrl = () => {
 

@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronRight,
   Menu
+  ,ShieldCheck
 } from 'lucide-react';
 import { Show, useClerk, useUser } from '@clerk/react';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Recommendations', href: '/recommendations', icon: ListTodo },
   { name: 'Sources', href: '/sources', icon: Network },
   { name: 'Team', href: '/team', icon: Users },
+  { name: 'Admin', href: '/admin', icon: ShieldCheck },
 ];
 
 function NavItems({ pathname }: { pathname: string }) {

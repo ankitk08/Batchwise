@@ -29,6 +29,7 @@ import ProductionDetail from '@/pages/production-detail';
 import Recommendations from '@/pages/recommendations';
 import Sources from '@/pages/sources';
 import Team from '@/pages/team';
+import Admin from '@/pages/admin';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,6 +113,7 @@ function WorkspaceRoutes() {
         <Route path="/recommendations" component={Recommendations} />
         <Route path="/sources" component={Sources} />
         <Route path="/team" component={Team} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </Shell>

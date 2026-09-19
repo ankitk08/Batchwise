@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useGetDashboard, useAskQuestion, QuestionAnswer } from "@workspace/api-client-react";
+import {
+  getGetAdminOverviewQueryKey,
+  getGetQuestionHistoryQueryKey,
+  QuestionAnswer,
+  useAskQuestion,
+  useGetDashboard,
+  useGetQuestionHistory,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -74,11 +82,24 @@ function formatPercent(value: number) {
 
 export default function Cockpit() {
   const { data: dashboard, isLoading } = useGetDashboard();
+  const { data: savedHistory } = useGetQuestionHistory();
+  const queryClient = useQueryClient();
   
   const [question, setQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string | QuestionAnswer }>>([]);
   
   const askQuestion = useAskQuestion();
+
+  useEffect(() => {
+    if (!savedHistory) return;
+    setChatHistory((current) => {
+      if (current.length > 0) return current;
+      return [...savedHistory].reverse().flatMap((item) => [
+        { role: 'user' as const, content: item.question },
+        { role: 'assistant' as const, content: `${item.headline}\n\n${item.answer}` },
+      ]);
+    });
+  }, [savedHistory]);
 
   const handleAsk = () => {
     if (!question.trim() || askQuestion.isPending) return;
@@ -90,6 +111,8 @@ export default function Cockpit() {
     askQuestion.mutate({ data: { question: currentQ } }, {
       onSuccess: (data) => {
         setChatHistory(prev => [...prev, { role: 'assistant', content: data }]);
+        queryClient.invalidateQueries({ queryKey: getGetQuestionHistoryQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
       },
       onError: () => {
         setChatHistory(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error processing your question.' }]);

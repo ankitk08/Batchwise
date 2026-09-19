@@ -68,6 +68,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UploadAnalysis"
+  /uploads:
+    get:
+      operationId: getUploads
+      tags: [profitability]
+      summary: Get persisted upload analyses for the current workspace
+      responses:
+        "200":
+          description: Recent workspace uploads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UploadRecord"
   /data-quality:
     get:
       operationId: getDataQuality
@@ -201,6 +215,32 @@ paths:
                 $ref: "#/components/schemas/QuestionAnswer"
         "400":
           description: Unsupported or empty question
+  /questions/history:
+    get:
+      operationId: getQuestionHistory
+      tags: [profitability]
+      summary: Get persisted consultant questions for the current workspace
+      responses:
+        "200":
+          description: Recent question history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionHistoryItem"
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [profitability]
+      summary: Get real workspace usage and persistence metrics
+      responses:
+        "200":
+          description: Workspace administration overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
   /sources:
     get:
       operationId: getSources
@@ -388,6 +428,24 @@ components:
         - readinessScore
         - mappings
         - issues
+    UploadRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        sizeBytes:
+          type: integer
+        rowCount:
+          type: integer
+        readinessScore:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, fileName, sizeBytes, rowCount, readinessScore, status, createdAt]
     DataQualitySummary:
       type: object
       properties:
@@ -721,6 +779,68 @@ components:
         - caveat
         - evidence
         - jobs
+    QuestionHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        headline:
+          type: string
+        answer:
+          type: string
+        createdAt:
+          type: string
+      required: [id, question, headline, answer, createdAt]
+    AdminUser:
+      type: object
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+        lastSeenAt:
+          type: string
+      required: [userId, displayName, role, lastSeenAt]
+    AdminActivity:
+      type: object
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        detail:
+          type: string
+        occurredAt:
+          type: string
+      required: [type, label, detail, occurredAt]
+    AdminOverview:
+      type: object
+      properties:
+        workspaceName:
+          type: string
+        persistent:
+          type: boolean
+        userCount:
+          type: integer
+        productionRunCount:
+          type: integer
+        uploadCount:
+          type: integer
+        questionCount:
+          type: integer
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminActivity"
+      required: [workspaceName, persistent, userCount, productionRunCount, uploadCount, questionCount, users, recentActivity]
     DataSource:
       type: object
       properties:

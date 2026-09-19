@@ -88,6 +88,21 @@ export const AnalyzeUploadResponse = zod.object({
 
 
 /**
+ * @summary Get persisted upload analyses for the current workspace
+ */
+export const GetUploadsResponseItem = zod.object({
+  "id": zod.number().int(),
+  "fileName": zod.string(),
+  "sizeBytes": zod.number().int(),
+  "rowCount": zod.number().int(),
+  "readinessScore": zod.number(),
+  "status": zod.string(),
+  "createdAt": zod.string()
+})
+export const GetUploadsResponse = zod.array(GetUploadsResponseItem)
+
+
+/**
  * @summary Get readiness and data-quality checks
  */
 export const GetDataQualityResponse = zod.object({
@@ -302,6 +317,44 @@ export const AskQuestionResponse = zod.object({
   "marginRate": zod.number(),
   "primaryLeak": zod.string(),
   "confidence": zod.enum(['high', 'medium', 'low'])
+}))
+})
+
+
+/**
+ * @summary Get persisted consultant questions for the current workspace
+ */
+export const GetQuestionHistoryResponseItem = zod.object({
+  "id": zod.number().int(),
+  "question": zod.string(),
+  "headline": zod.string(),
+  "answer": zod.string(),
+  "createdAt": zod.string()
+})
+export const GetQuestionHistoryResponse = zod.array(GetQuestionHistoryResponseItem)
+
+
+/**
+ * @summary Get real workspace usage and persistence metrics
+ */
+export const GetAdminOverviewResponse = zod.object({
+  "workspaceName": zod.string(),
+  "persistent": zod.boolean(),
+  "userCount": zod.number().int(),
+  "productionRunCount": zod.number().int(),
+  "uploadCount": zod.number().int(),
+  "questionCount": zod.number().int(),
+  "users": zod.array(zod.object({
+  "userId": zod.string(),
+  "displayName": zod.string(),
+  "role": zod.string(),
+  "lastSeenAt": zod.string()
+})),
+  "recentActivity": zod.array(zod.object({
+  "type": zod.string(),
+  "label": zod.string(),
+  "detail": zod.string(),
+  "occurredAt": zod.string()
 }))
 })
 

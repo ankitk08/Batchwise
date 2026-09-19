@@ -4,6 +4,7 @@ import {
   AnalyzeUploadResponse,
   AskQuestionBody,
   AskQuestionResponse,
+  GetAdminOverviewResponse,
   GetDataQualityResponse,
   GetDashboardResponse,
   GetJobParams,
@@ -12,14 +13,15 @@ import {
   GetJobsResponse,
   GetKpisResponse,
   GetPrototypeProfileResponse,
+  GetQuestionHistoryResponse,
   GetRecommendationsResponse,
   GetSemanticModelResponse,
   GetSourcesResponse,
   GetTeamResponse,
+  GetUploadsResponse,
 } from "@workspace/api-zod";
 import {
   kpis,
-  productionRuns,
   prototypeProfile,
   qualityChecks,
   recommendations,
@@ -28,10 +30,22 @@ import {
   sources,
   team,
 } from "../lib/food-prototype-data";
+import {
+  ensureWorkspace,
+  getAdminOverview,
+  getLatestUploadAnalysis,
+  getQuestionHistory,
+  getUploads,
+  getWorkspaceRuns,
+  saveQuestion,
+  saveUpload,
+} from "../lib/batchwise-store";
 
 const router: IRouter = Router();
 
-router.get("/dashboard", (_req, res) => {
+router.get("/dashboard", async (req, res): Promise<void> => {
+  const context = await ensureWorkspace(req);
+  const productionRuns = await getWorkspaceRuns(context.workspaceId);
   const closedJobs = productionRuns.filter((job) => job.status === "closed");
   const revenue = closedJobs.reduce((sum, job) => sum + job.revenue, 0);
   const contributionMargin = closedJobs.reduce(
@@ -56,7 +70,7 @@ router.get("/dashboard", (_req, res) => {
       wasteCost: 18420,
       scheduleAttainment: 87,
       ordersOnHold: 2,
-      lastSyncedAt: "2026-09-19T08:42:00.000Z",
+      lastSyncedAt: new Date().toISOString(),
     }),
   );
 });
@@ -65,7 +79,7 @@ router.get("/prototype-profile", (_req, res) => {
   res.json(GetPrototypeProfileResponse.parse(prototypeProfile));
 });
 
-router.post("/uploads/analyze", (req, res) => {
+router.post("/uploads/analyze", async (req, res): Promise<void> => {
   const parsed = AnalyzeUploadBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -132,8 +146,8 @@ router.post("/uploads/analyze", (req, res) => {
     },
   ];
 
-  res.json(
-    AnalyzeUploadResponse.parse({
+  const context = await ensureWorkspace(req);
+  const analysis = AnalyzeUploadResponse.parse({
       datasetName: fileName,
       inferredType: normalizedColumns.some((column) =>
         column.includes("lot"),
@@ -149,21 +163,36 @@ router.post("/uploads/analyze", (req, res) => {
       mappings,
       issues,
       sizeBytes,
-    }),
-  );
+    });
+  await saveUpload(context, { fileName, sizeBytes, rowCount }, analysis);
+  res.json(analysis);
 });
 
-router.get("/data-quality", (_req, res) => {
+router.get("/uploads", async (req, res): Promise<void> => {
+  const context = await ensureWorkspace(req);
+  res.json(GetUploadsResponse.parse(await getUploads(context.workspaceId)));
+});
+
+router.get("/data-quality", async (req, res): Promise<void> => {
+  const context = await ensureWorkspace(req);
+  const latestUpload = await getLatestUploadAnalysis(context.workspaceId);
+  const checks = latestUpload
+    ? [...qualityChecks.filter((check) => check.status === "passed"), ...latestUpload.issues]
+    : qualityChecks;
   res.json(
     GetDataQualityResponse.parse({
-      readiness: "ready-with-caveats",
-      overallScore: 91,
+      readiness: latestUpload?.status === "needs-review"
+        ? "blocked"
+        : latestUpload?.status ?? "ready-with-caveats",
+      overallScore: latestUpload?.readinessScore ?? 91,
       revenueCoverage: 99.4,
-      costCoverage: 96.8,
+      costCoverage: latestUpload
+        ? Math.max(50, latestUpload.readinessScore - 2.2)
+        : 96.8,
       traceabilityCoverage: 100,
-      blockedKpis: 1,
-      reviewItems: 2,
-      checks: qualityChecks,
+      blockedKpis: checks.some((check) => check.status === "blocked") ? 1 : 0,
+      reviewItems: checks.filter((check) => check.status === "review").length,
+      checks,
     }),
   );
 });
@@ -184,7 +213,7 @@ router.get("/team", (_req, res) => {
   res.json(GetTeamResponse.parse(team));
 });
 
-router.get("/jobs", (req, res) => {
+router.get("/jobs", async (req, res): Promise<void> => {
   const parsed = GetJobsQueryParams.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -192,6 +221,8 @@ router.get("/jobs", (req, res) => {
   }
 
   const { status = "all", search } = parsed.data;
+  const context = await ensureWorkspace(req);
+  const productionRuns = await getWorkspaceRuns(context.workspaceId);
   const normalizedSearch = search?.trim().toLowerCase();
 
   const matchingJobs = productionRuns.filter((job) => {
@@ -215,13 +246,15 @@ router.get("/jobs", (req, res) => {
   res.json(GetJobsResponse.parse(matchingJobs));
 });
 
-router.get("/jobs/:jobId", (req, res) => {
+router.get("/jobs/:jobId", async (req, res): Promise<void> => {
   const params = GetJobParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
 
+  const context = await ensureWorkspace(req);
+  const productionRuns = await getWorkspaceRuns(context.workspaceId);
   const job = productionRuns.find(
     (candidate) => candidate.id === params.data.jobId,
   );
@@ -233,7 +266,7 @@ router.get("/jobs/:jobId", (req, res) => {
   res.json(GetJobResponse.parse(runWithEvidence(job)));
 });
 
-router.post("/questions/ask", (req, res) => {
+router.post("/questions/ask", async (req, res): Promise<void> => {
   const parsed = AskQuestionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -241,6 +274,8 @@ router.post("/questions/ask", (req, res) => {
   }
 
   const question = parsed.data.question.trim();
+  const context = await ensureWorkspace(req);
+  const productionRuns = await getWorkspaceRuns(context.workspaceId);
   const normalized = question.toLowerCase();
   const lowMarginJobs = productionRuns
     .filter((job) => job.status === "closed" && job.marginRate < 20)
@@ -270,15 +305,14 @@ router.post("/questions/ask", (req, res) => {
       ? "PR-240919-A for Regional Grocery Co-op accumulated 19 unplanned labor hours after filler downtime. Ingredients remain within standard, while final sanitation and conversion overhead are not yet posted."
       : "PR-240914-C lost money and PR-240916-B closed below the 20% target. The primary drivers were relabeling after a quality hold, tomato input price, and higher cook loss.";
 
-  res.json(
-    AskQuestionResponse.parse({
+  const response = AskQuestionResponse.parse({
       question,
       answer,
       headline,
       metric: isOpenRiskQuestion ? "Open jobs at risk" : "Cost above estimate",
       metricValue: isOpenRiskQuestion ? answerJobs.length : totalLeak,
       metricUnit: isOpenRiskQuestion ? "jobs" : "USD",
-      asOf: "2026-09-19T08:42:00.000Z",
+      asOf: new Date().toISOString(),
       confidence: "high",
       caveat:
         "Seven labor rows with unresolved employee aliases and two packaging unit conversions are excluded until approved.",
@@ -303,8 +337,23 @@ router.post("/questions/ask", (req, res) => {
         },
       ],
       jobs: answerJobs,
-    }),
+    });
+  await saveQuestion(context, question, response);
+  res.json(response);
+});
+
+router.get("/questions/history", async (req, res): Promise<void> => {
+  const context = await ensureWorkspace(req);
+  res.json(
+    GetQuestionHistoryResponse.parse(
+      await getQuestionHistory(context.workspaceId),
+    ),
   );
+});
+
+router.get("/admin/overview", async (req, res): Promise<void> => {
+  const context = await ensureWorkspace(req);
+  res.json(GetAdminOverviewResponse.parse(await getAdminOverview(context)));
 });
 
 router.get("/sources", (_req, res) => {
