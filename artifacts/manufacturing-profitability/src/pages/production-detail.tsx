@@ -44,7 +44,7 @@ export default function ProductionDetail() {
   }
 
   const isAtRisk = job.status === 'at-risk';
-  const marginIsLow = job.marginRate < 0.2;
+  const marginIsLow = job.marginRate < 20;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">
@@ -74,7 +74,7 @@ export default function ProductionDetail() {
             <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Run Margin</span>
             <div className="flex items-center gap-3 mt-1">
               <span className={cn("text-3xl font-bold font-mono", marginIsLow ? "text-destructive" : "text-emerald-600")}>
-                {(job.marginRate * 100).toFixed(1)}%
+                {job.marginRate.toFixed(1)}%
               </span>
               <div className="text-right">
                 <div className="font-mono text-sm">${job.margin.toLocaleString()}</div>

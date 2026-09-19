@@ -109,8 +109,8 @@ export default function Production() {
                       ${job.revenue.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className={cn("font-mono font-bold", job.marginRate < 0.2 ? "text-destructive" : "text-emerald-600")}>
-                        {job.marginRate > 0 ? '+' : ''}{(job.marginRate * 100).toFixed(1)}%
+                      <div className={cn("font-mono font-bold", job.marginRate < 20 ? "text-destructive" : "text-emerald-600")}>
+                        {job.marginRate > 0 ? '+' : ''}{job.marginRate.toFixed(1)}%
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
                         ${job.margin.toLocaleString()}
