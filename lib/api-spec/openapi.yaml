@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: profitability
+    description: Manufacturing profitability and answer operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,99 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [profitability]
+      summary: Get the profitability cockpit summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /jobs:
+    get:
+      operationId: getJobs
+      tags: [profitability]
+      summary: List recent manufacturing jobs
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, at-risk, profitable, closed]
+            default: all
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+  /jobs/{jobId}:
+    get:
+      operationId: getJob
+      tags: [profitability]
+      summary: Get a job with cost evidence
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetail"
+        "404":
+          description: Job not found
+  /questions/ask:
+    post:
+      operationId: askQuestion
+      tags: [profitability]
+      summary: Ask a source-backed profitability question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "200":
+          description: Source-backed answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionAnswer"
+        "400":
+          description: Unsupported or empty question
+  /sources:
+    get:
+      operationId: getSources
+      tags: [profitability]
+      summary: Get connected source health
+      responses:
+        "200":
+          description: Connected data sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataSource"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +128,191 @@ components:
           type: string
       required:
         - status
+    DashboardSummary:
+      type: object
+      properties:
+        period:
+          type: string
+        revenue:
+          type: number
+        contributionMargin:
+          type: number
+        contributionMarginRate:
+          type: number
+        atRiskJobs:
+          type: integer
+        closedJobs:
+          type: integer
+        marginChange:
+          type: number
+        lastSyncedAt:
+          type: string
+      required:
+        - period
+        - revenue
+        - contributionMargin
+        - contributionMarginRate
+        - atRiskJobs
+        - closedJobs
+        - marginChange
+        - lastSyncedAt
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+        jobNumber:
+          type: string
+        customer:
+          type: string
+        product:
+          type: string
+        status:
+          type: string
+          enum: [open, at-risk, closed]
+        dueDate:
+          type: string
+        revenue:
+          type: number
+        estimatedCost:
+          type: number
+        actualCost:
+          type: number
+        margin:
+          type: number
+        marginRate:
+          type: number
+        primaryLeak:
+          type: string
+        confidence:
+          type: string
+          enum: [high, medium, low]
+      required:
+        - id
+        - jobNumber
+        - customer
+        - product
+        - status
+        - dueDate
+        - revenue
+        - estimatedCost
+        - actualCost
+        - margin
+        - marginRate
+        - primaryLeak
+        - confidence
+    CostLine:
+      type: object
+      properties:
+        category:
+          type: string
+        estimated:
+          type: number
+        actual:
+          type: number
+        variance:
+          type: number
+        source:
+          type: string
+        note:
+          type: string
+      required: [category, estimated, actual, variance, source, note]
+    EvidenceItem:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        source:
+          type: string
+        detail:
+          type: string
+      required: [label, value, source, detail]
+    JobDetail:
+      allOf:
+        - $ref: "#/components/schemas/Job"
+        - type: object
+          properties:
+            openedAt:
+              type: string
+            customerId:
+              type: string
+            costLines:
+              type: array
+              items:
+                $ref: "#/components/schemas/CostLine"
+            evidence:
+              type: array
+              items:
+                $ref: "#/components/schemas/EvidenceItem"
+          required: [openedAt, customerId, costLines, evidence]
+    QuestionInput:
+      type: object
+      properties:
+        question:
+          type: string
+          minLength: 1
+      required: [question]
+    QuestionAnswer:
+      type: object
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        headline:
+          type: string
+        metric:
+          type: string
+        metricValue:
+          type: number
+        metricUnit:
+          type: string
+        asOf:
+          type: string
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        caveat:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+      required:
+        - question
+        - answer
+        - headline
+        - metric
+        - metricValue
+        - metricUnit
+        - asOf
+        - confidence
+        - caveat
+        - evidence
+        - jobs
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [connected, needs-review, planned]
+        recordCount:
+          type: integer
+        lastSyncedAt:
+          type: string
+        detail:
+          type: string
+      required: [id, name, type, status, recordCount, lastSyncedAt, detail]
 

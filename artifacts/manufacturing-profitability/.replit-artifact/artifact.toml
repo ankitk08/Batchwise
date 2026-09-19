@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Manufacturing Profitability Copilot"
+description = "A decision cockpit for owner-led manufacturers to see job profitability, margin leaks, and source-backed answers across ERP, accounting, and spreadsheet data."
+version = "1.0.0"
+id = "artifacts/manufacturing-profitability"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23171
+
+[services.development]
+run = "pnpm --filter @workspace/manufacturing-profitability run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/manufacturing-profitability", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/manufacturing-profitability/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23171"
+BASE_PATH = "/"
