@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/batchwise-project-deck/"
+title = "Batchwise Decision Intelligence"
+description = "A nine-slide stakeholder presentation explaining the Batchwise governed analytics prototype, its target food-processing customers, operating workflow, governance model, verified cockpit metrics, limitations, and path to design-partner deployment."
+version = "1.0.0"
+id = "artifacts/batchwise-project-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/batchwise-project-deck/" ]
+localPort = 18669
+
+[services.development]
+run = "pnpm --filter @workspace/batchwise-project-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/batchwise-project-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/batchwise-project-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18669"
+BASE_PATH = "/batchwise-project-deck/"
