@@ -108,8 +108,10 @@ function WorkspaceRoutes() {
         <Route path="/data-quality" component={DataQuality} />
         <Route path="/model" component={Model} />
         <Route path="/kpis" component={Kpis} />
+        <Route path="/production/:id">
+          {(params) => <ProductionDetail id={params.id} />}
+        </Route>
         <Route path="/production" component={Production} />
-        <Route path="/production/:id" component={ProductionDetail} />
         <Route path="/recommendations" component={Recommendations} />
         <Route path="/sources" component={Sources} />
         <Route path="/team" component={Team} />
@@ -135,7 +137,7 @@ function Router() {
             <Redirect to="/sign-in" />
           </Show>
         </Route>
-        <Route path="/:rest*" component={WorkspaceRoutes} />
+        <Route component={WorkspaceRoutes} />
       </Switch>
     </RoutedErrorBoundary>
   );

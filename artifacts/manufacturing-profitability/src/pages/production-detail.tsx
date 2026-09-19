@@ -1,4 +1,4 @@
-import { useParams, Link } from "wouter";
+import { Link } from "wouter";
 import { useGetJob } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,9 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function ProductionDetail() {
-  const { id } = useParams<{ id: string }>();
-  const { data: job, isLoading } = useGetJob(id!);
+export default function ProductionDetail({ id }: { id: string }) {
+  const { data: job, isLoading } = useGetJob(id);
 
   if (isLoading) {
     return (

@@ -1,1 +1,2 @@
 - [Batchwise workspace persistence](batchwise-workspace-persistence.md) — keep the public seeded demo while isolating each signed-in user's persisted workspace activity.
+- [Wouter deep-route fallback](wouter-deep-route-fallback.md) — use an unpathed fallback route for workspace pages so multi-segment URLs render on direct load.
