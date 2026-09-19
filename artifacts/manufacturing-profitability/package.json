@@ -8,6 +8,7 @@
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "test:browser": "playwright test",
+    "test:browser:production": "E2E_PRODUCTION_SMOKE=1 playwright test test/browser/authenticated-routes.spec.mjs",
     "test:routes": "node --test test/routes.smoke.test.mjs",
     "validate:routes": "pnpm run test:routes && pnpm run test:browser",
     "typecheck": "tsc -p tsconfig.json --noEmit"

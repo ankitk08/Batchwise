@@ -3,7 +3,9 @@ import { clerk } from '@clerk/testing/playwright';
 import { expect, test } from '@playwright/test';
 
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-const testEmail = `route-smoke+${randomUUID()}@example.com`;
+const smokeScope =
+  process.env.E2E_PRODUCTION_SMOKE === '1' ? 'production' : 'development';
+const testEmail = `route-smoke-${smokeScope}+${randomUUID()}@example.com`;
 const testPassword = `Route-smoke-${randomUUID()}!aA1`;
 let testUserId;
 
@@ -46,6 +48,8 @@ test.describe.serial('Clerk-initialized application routes', () => {
       body: JSON.stringify({
         email_address: [testEmail],
         password: testPassword,
+        first_name: 'Route Smoke',
+        last_name: smokeScope,
         skip_password_checks: true,
         skip_password_requirement: true,
       }),
